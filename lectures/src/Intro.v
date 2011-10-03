@@ -7,20 +7,22 @@
 (** 
 - The precise art of _formal reasoning_.
 
+- Use a proof assistant (_COQ_) to formalize proofs.
+
 - _Propositional logic_ as the scaffolding of reasoning
 
-- Foundational issues: %\textbf{% classical%}% vs %\textbf{%intuitionistic%}% logic
+- Foundational issues: _classical_ vs _intuitionistic_ logic
 
 - Express yourself precisely
-    using the language of %\textbf{%predicate logic%}%
+    using the language of _predicate logic_
 
-- Proof techniques: reasoning by cases, proof by %\textbf{%induction%}%
+- Finite sets and operations on sets, reasoning by cases.
 
-- %\textbf{%Algebra%}%: reasoning with equality
+- Reasoning about natural numbers, proof by _induction_
 
-- Use a proof assistant (%\textbf{%COQ%}%) to formalize proofs
+- Equational reasoning (Algebra).
 
-- Reasoning about %\textbf{%programs and data structures%}%
+- Reasoning about _programs and data structures_.
 *)
 
 (** * What is Coq ?
