@@ -104,7 +104,7 @@ intro qr.
 intro p.
 
 (** Now we have three assumptions [P -> Q], [Q -> R] and [P]. 
-It remains to prove [R]. We cannot use [intro] anymore because our goal is not 
+It remains to prove [R]. We cannot use [intro] any more because our goal is not 
 an implication. Instead we need to use our assumptions. The only assumption which 
 could help us to prove [R] is [Q -> R]. We use the [apply] tactic. *)
 
@@ -126,8 +126,8 @@ Qed.
 
 (** We observe that there are two types of proof steps (tactics):
 - introduction: How can we prove a proposition? In the case of an implication this is [intro]. To prove [P -> Q], we assume [P] and prove [Q].
-- elimination: How can we use an assumption? In the case of implication this is [apply]. If we know [P -> Q] and we want to prove [Q] it is sufficent to prove [P].
-Actually [apply] is a bit more general: if we know [P1 -> P2 -> ... -> Pn -> Q] and we want to prove [Q] then it is sufficent to prove [P1],[P2],...,[Pn].
+- elimination: How can we use an assumption? In the case of implication this is [apply]. If we know [P -> Q] and we want to prove [Q] it is sufficient to prove [P].
+Actually [apply] is a bit more general: if we know [P1 -> P2 -> ... -> Pn -> Q] and we want to prove [Q] then it is sufficient to prove [P1],[P2],...,[Pn].
 
 Indeed the distinction of introduction and elimination
 steps is applicable to all the connectives we are going to
@@ -165,7 +165,7 @@ exact q.
 Qed.
 
 
-(** How do we use and assumption [P /\ Q]. We use [destruct] to split it into two assumptions. 
+(** How do we use an assumption [P /\ Q]. We use [destruct] to split it into two assumptions. 
     As an example we prove that [P /\ Q -> Q /\ P].
 *)
 
@@ -191,9 +191,12 @@ Qed.
 
 (** * The currying theorem *)
 
-(** Maybe you have already noticed that a statement like [P -> Q -> R] basically means that [R] can be proved from assuming both [P] and [Q]. Indeed, it is equivalent to [P /\ Q -> R]. We can show this formally and at the same time for the first time use [<->].
+(** Maybe you have already noticed that a statement like [P -> Q -> R]
+basically means that [R] can be proved from assuming both [P] and [Q].
+Indeed, it is equivalent to [P /\ Q -> R]. We can show this formally by using 
+[<->] for the first time.
 
-All the steps we have already explained so I won't comment. It is a good idea to step through the proof using coq.
+All the steps we have already explained so I won't comment. It is a good idea to step through the proof using Coq.
 *)
 
 Lemma curry : (P /\ Q -> R) <-> (P -> Q -> R).
@@ -211,7 +214,7 @@ destruct pq as [p q].
 exact q.
 Qed.
 
-(** I call this the currying theorem, because this is the logical counterpart of currying in functional programming: i.e. that a function with several parameters can be reudced to a function which returns a function. So in Haskell addition has the type [Int -> Int -> Int]. *)
+(** I call this the currying theorem, because this is the logical counterpart of currying in functional programming: i.e. that a function with several parameters can be reduced to a function which returns a function. So in Haskell addition has the type [Int -> Int -> Int]. *)
 
 (** * Disjunction *)
 
@@ -254,7 +257,7 @@ Qed.
 (** As an example of how to combine the proof steps for conjunction
 and disjunction we show that distributivity holds, i.e. [P /\ (Q \/
 R)] is logically equivalent to [(P /\ Q) \/ (P /\ R)]. This is
-reminiscient of the principle in algebra that [x*(y + z) = x*y + x*z]. 
+reminiscent of the principle in algebra that [x * (y + z) = x * y + x * z]. 
 *)
 
 Lemma andOrDistr : P /\ (Q \/ R) 
@@ -286,11 +289,11 @@ right.
 exact r.
 Qed.
 
-(** As before: to understand the working of this script it is advisible to step through it using Coq. *)
+(** As before: to understand the working of this script it is advisable to step through it using Coq. *)
 
 (** * True and False *)
 
-(** [True] is just a conjunction with no arguments as opposed to [/\] which has two. Similarily [False] is a dijsunction with no arguments. As a consequence we already know the proof rules for [True] and [False].
+(** [True] is just a conjunction with no arguments as opposed to [/\] which has two. Similarity [False] is a disjunction with no arguments. As a consequence we already know the proof rules for [True] and [False].
 
 We can prove [True] without any assumptions.
 *)
@@ -302,7 +305,7 @@ split.
 
 Qed.
 
-(** On the other had we can prove anything from [False]. This is called "ex falso quod libet" in latin.
+(** On the other had we can prove anything from [False]. This is called "ex falso quod libet" in Latin.
 *)
 
 Lemma exFalso : False -> P.
@@ -315,7 +318,7 @@ Qed.
 
 (** * Negation *)
 
-(** [~ P] is defined as [P -> False]. Using this we can establish some basic theorems about negation. First we show that we connot have both [P] and [~P], that is we prove [~ (P /\ ~ P)].
+(** [~ P] is defined as [P -> False]. Using this we can establish some basic theorems about negation. First we show that we cannot have both [P] and [~ P], that is we prove [~ (P /\ ~ P)].
 *)
 
 Lemma incons : ~ ( P /\ ~ P).
@@ -328,7 +331,7 @@ Qed.
 
 (** Another example is to show that [P] implies [~ ~ P]. *)
 
-Lemma p2nnp : P -> ~  ~ P.
+Lemma p2nnp : P -> ~ ~ P.
 intros p np.
 apply np.
 exact p.
@@ -375,7 +378,7 @@ Qed.
 (** Unless stated otherwise we will try to prove propositions intuitionsitically, that is without using [classic].
    An intuitionistic proof provides a positive reason why something is true, while a classical proof may be
    quite indirect and not so easily acceptable intuitively. Another advantage of intuitionistic reasoning is that it
-   is constructive, that is whenever we prove the existence of a certain object we can also explicitely construct it.
+   is constructive, that is whenever we prove the existence of a certain object we can also explicitly construct it.
    This is not true in intuitionistic logic. Moreover, in intuitionistic logic we can make differences which disappear
    when using classical logic. For example we can explicit state when a property is decidable, i.e. can be computed 
    by a computer program. 
