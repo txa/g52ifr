@@ -30,7 +30,7 @@ like "The sun is shining" or "We go to the zoo." *)
 - Equivalence, [<->], read [P <-> Q] as [P] is equivalent to [Q]. We define [P <-> Q] as [(P -> Q) /\ (Q -> P)].
 
 As in algebra we use parentheses to group logical expressions. To save parentheses there are a number of conventions:
-- Implication is left associative, i.e. we read [P -> Q -> R] as [P -> (Q -> R)].
+- Implication is right associative, i.e. we read [P -> Q -> R] as [P -> (Q -> R)].
 - Implication and equivalence bind weaker than conjunction and disjunction. E.g. we read [P \/ Q -> R] as [(P \/ Q) -> R]. 
 - Conjunction binds stronger than disjunction. E.g. we read [P /\ Q \/ R] as [(P /\ Q) \/ R].
 - Negation binds stronger than all the other connectives, e.g. we read [~ P /\ Q] as [(~ P) /\ Q].
@@ -52,12 +52,12 @@ To start a proof we write:*)
 Lemma I : P -> P.
 
 (** It is useful to run the source of this document in Coq to see what
-happens.  Coq enters a proofstate and shows what we are going to prove
+happens.  Coq enters a proof state and shows what we are going to prove
 under what assumptions. In the moment our assumptions are that
-[P],[Q],[R] are propositions and that we want to prove [P -> P].  To
+[P],[Q],[R] are propositions and our goal is [P -> P].  To
 prove an implication we add the left hand side to the assumptions and
-continue to prove the right hand side - this is dine using the [intro]
-tactic. We can also choose a name for the assumption, let's call it [p].
+continue to prove the right hand side - this is done using the [intro]
+tactic. We also choose a name for the assumption, let's call it [p].
 *)
 
 intro p.
@@ -79,11 +79,14 @@ Qed.
 (** * Using assumptions. *)
 
 (** Next we will prove another tautology, namely 
-[(P -> Q) -> (Q -> R) -> P -> R]
-Try to understand why this is intuitively true for any propositions [P],[Q] and [R]
+[(P -> Q) -> (Q -> R) -> P -> R].
+Try to understand why this is intuitively true for any propositions [P],[Q] and [R].
 
 To prove this in Coq we need to know how to use an implication which we have assumed.
-This can be done using the [apply] tactic.
+This can be done using the [apply] tactic: if we have assumed [P -> Q] and we want to 
+prove [Q] then we can use the assumption to reduce (hopefully) the problem to proving
+[P]. Clearly, using this step is only sensible if [P] is actually easier to prove
+than [Q]. Step through the next proof to see how this works in practice!
 *)
 
 Lemma C : (P -> Q) -> (Q -> R) -> P -> R.
@@ -126,7 +129,7 @@ Qed.
 - elimination: How can we use an assumption? In the case of implication this is [apply]. If we know [P -> Q] and we want to prove [Q] it is sufficent to prove [P].
 Actually [apply] is a bit more general: if we know [P1 -> P2 -> ... -> Pn -> Q] and we want to prove [Q] then it is sufficent to prove [P1],[P2],...,[Pn].
 
-We will observe that the distinction of introduction and elimination
+Indeed the distinction of introduction and elimination
 steps is applicable to all the connectives we are going to
 encounter. This is a fundamental symmetry in reasoning.
 *)
@@ -135,7 +138,8 @@ encounter. This is a fundamental symmetry in reasoning.
     An example is [exact] which we can use when we want to refer to an assumption.
     We can also use [assumption] then we don't even have to give the name of the assumption. *)
 
-(** If we want to do several [intro] steps we can use [intros]. *)
+(** If we want to combine several [intro] steps we can use [intros]. We can also use [intros] without parameters in which case Coq does
+    as many [intro] as possible and invents the names itself.*)
 
 (** * Conjunction *)
 
@@ -311,10 +315,10 @@ Qed.
 
 (** * Negation *)
 
-(** [~ P] is defined as [P -> False]. Using this we can establish some basic theorems about negation. First we show that we connot have both [P] and [~P], that is we prove [~ (P /\ ~P)].
+(** [~ P] is defined as [P -> False]. Using this we can establish some basic theorems about negation. First we show that we connot have both [P] and [~P], that is we prove [~ (P /\ ~ P)].
 *)
 
-Lemma incons : ~( P /\ ~P).
+Lemma incons : ~ ( P /\ ~ P).
 intro h.
 destruct h as [p np].
 apply np.
@@ -322,10 +326,61 @@ exact p.
 Qed.
 
 
-(** Another example is to show that [P] implies [~~P]. *)
+(** Another example is to show that [P] implies [~ ~ P]. *)
 
-Lemma p2nnp : P -> ~~P.
+Lemma p2nnp : P -> ~  ~ P.
 intros p np.
 apply np.
 exact p.
 Qed.
+
+(** * Classical Reasoning *)
+
+(** You may expect that we can also prove the other direction [~ ~ P -> P] and that indeed [P <-> ~ ~ P]. 
+    We can reason that [P] is either [True] or [False] and in both cases [~ ~ P] will be the same. However,
+    this reasoning is not possible using the principles we have introduced so far. The reason is that Coq is based
+    on intuitionistic logic, and the above proposition is not provable intuitionistically.
+
+    However, we can use an additional axiom, which corresponds to the principle that every proposition is either [True] 
+    or [False], this is the Principle of the Excluded Middle [P \/ ~ P]. In Coq this can be achieved by: *)
+
+Require Import Coq.Logic.Classical.
+
+(** This means we are now using Classical Logic instead of Intuitionistic Logic. The only difference is that we have an
+    axiom [classic] which proves the principle of the excluded middle for any proposition. We can use this to prove 
+    [~ ~ P -> P]. *)
+
+Lemma nnpp : ~~P -> P.
+intro nnp.
+
+(** Here we use a particular instance of [classic] for [P]. *)
+
+destruct (classic P) as [p | np].
+
+(** First case [P] holds *)
+
+exact p.
+
+(** 2nd case [~ P] holds. Here we appeal to [exFalso]. *)
+
+apply exFalso.
+
+(** Notice that we have shown [exFalso] only for [P]. We should have shown it for any proposition but this would 
+   involve quantification over all propositions and we haven't done this yet. *)
+
+apply nnp.
+exact np.
+Qed.
+
+(** Unless stated otherwise we will try to prove propositions intuitionsitically, that is without using [classic].
+   An intuitionistic proof provides a positive reason why something is true, while a classical proof may be
+   quite indirect and not so easily acceptable intuitively. Another advantage of intuitionistic reasoning is that it
+   is constructive, that is whenever we prove the existence of a certain object we can also explicitely construct it.
+   This is not true in intuitionistic logic. Moreover, in intuitionistic logic we can make differences which disappear
+   when using classical logic. For example we can explicit state when a property is decidable, i.e. can be computed 
+   by a computer program. 
+*)
+
+
+
+

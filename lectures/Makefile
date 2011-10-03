@@ -1,5 +1,8 @@
 MODULES       := Intro Prop
 TEX           := $(MODULES:%=latex/%.v.tex)
+VS            := $(MODULES:%=src/%.v)
+
+.PHONY: notes html
 
 notes: latex/g52ifr.pdf
 
@@ -19,4 +22,8 @@ latex/%.pdf: latex/%.tex
 
 latex/g52ifr.pdf: latex/g52ifr.tex $(TEX)
 	cd latex ; pdflatex g52ifr ; pdflatex g52ifr 
+
+html: Makefile $(VS) 
+	mkdir -p html
+	coqdoc --interpolate $(VS) -d html
 
