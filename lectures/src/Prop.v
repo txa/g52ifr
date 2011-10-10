@@ -316,6 +316,11 @@ destruct f.
 
 Qed.
 
+(** In terms of introduction and elimination steps we may summarize:
+   - True: There is one introduction rule but no elimination.
+   - False: There is one elimination rule but no introduction.
+*)
+
 (** * Negation *)
 
 (** [~ P] is defined as [P -> False]. Using this we can establish some basic theorems about negation. First we show that we cannot have both [P] and [~ P], that is we prove [~ (P /\ ~ P)].

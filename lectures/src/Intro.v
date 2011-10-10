@@ -80,7 +80,7 @@
 
    - Course page: http://www.cs.nott.ac.uk/~txa/g52ifr/
 
-   - Coq Labs: every Monday (1300 - 1400) in A32, starting next week (11/10).
+   - Coq Labs: every Tuesday (1600 - 1800) in A32, starting next week (11/10).
 
    - Weekly coursework, 1st available next Monday.
 
