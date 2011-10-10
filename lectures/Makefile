@@ -3,7 +3,7 @@ TEX           := $(MODULES:%=latex/%.v.tex)
 VS            := $(MODULES:%=src/%.v)
 VS_DOC        := $(MODULES:%=%.v)
 
-.PHONY: notes html
+.PHONY: notes html src
 
 notes: latex/g52ifr.pdf
 
@@ -18,6 +18,14 @@ latex/Intro.v.tex: Makefile src/Intro.v
 latex/Prop.v.tex: Makefile src/Prop.v 
 	cd src ; coqdoc --interpolate --latex --body-only -s \
 		Prop.v -o ../latex/Prop.v.tex
+
+latex/Pred.v.tex: Makefile src/Pred.v 
+	cd src ; coqdoc --interpolate --latex --body-only -s \
+		Pred.v -o ../latex/Pred.v.tex
+
+src : $(VS)
+	mkdir -p ../www/src
+	cp src/*.v ../www/src
 
 latex/%.pdf: latex/%.tex 
 

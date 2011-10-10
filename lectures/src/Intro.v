@@ -1,6 +1,6 @@
 (* Copyright (c) 2011, Thorsten Altenkirch *)
 
-(** %\chapter{Introduction}% *)
+(** %\chapter{%#<H0>#Introduction%}%#</H0># *)
 
 (** * What is this course about? *)
 

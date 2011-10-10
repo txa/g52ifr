@@ -1,7 +1,8 @@
 
 (* Copyright (c) 2011, Thorsten Altenkirch *)
 
-(** %\chapter{Propositional Logic}% *)
+(** %\chapter{%#<H0>#Propositional Logic%}%#</H0># *)
+
 Section prop.
 
 (** 
@@ -389,6 +390,32 @@ Qed.
    by a computer program. 
 *)
 
+(** * The cut rule *)
 
+(** This is a good point to introduce another structural rule: the cut rule.
+    Cutting a proof means to introduce an intermediate goal, then you prove 
+    your current goal from this intermediate goal, and you prove theintermediate goal.
+    This is particularly useful when you use the intermediate goal several times.
 
+    In Coq this can be achieved by using [assert]. [assert h : H] introduces [H] as a new 
+    subgoal and after you have proven this you can use an assumption [h : H] to prove
+    your original goal.
 
+    The following (artificial) example demonstrates the use of [assert].
+ *)
+
+Lemma usecut : (P /\ ~P) -> Q.
+intro pnp.
+(** If we had a generic version of [exFalso] we could use this.
+    Instead we can introduce [False] as an intermediate goal. *)
+assert (f : False).
+(** which is easy to prove *)
+destruct pnp as [p np].
+apply np.
+exact p.
+(** and using [False] it is easy to prove [Q]. *)
+destruct f.
+Qed.
+
+(** This example also shows that sometimes we have to cut (i.e. use [assert]) to prove something.
+*)      
