@@ -1,4 +1,4 @@
-MODULES       := Intro Prop
+MODULES       := Intro Prop Pred
 TEX           := $(MODULES:%=latex/%.v.tex)
 VS            := $(MODULES:%=src/%.v)
 VS_DOC        := $(MODULES:%=%.v)

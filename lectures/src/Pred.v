@@ -5,7 +5,7 @@ Section pred.
 
 (** Predicate logic extends propositional logic: we can talk about 
     sets of things, e.g. numbers and define properties, called
-    predicates. We will soon define some useful sets and ways to
+    predicates and relations. We will soon define some useful sets and ways to
     define sets but for the moment, we will use set variables as we
     have used propositional variables before.
 
@@ -73,19 +73,25 @@ Variable R : A -> B -> Prop.
 
 Lemma AllMono : (forall x:A,P x) -> (forall x:A,P x -> Q x) -> forall x:A, Q x.
 intros H1 H2.
+
 (** To prove [forall x:A,Q x] assume that there is an element [a:A] and prove [Q a]
-    We use [intro a] to do this.
-.*)
+    We use [intro a] to do this. *)
+
 intro a.
+
 (** If we know [H2 : forall x:A,P x -> Q x] and we want to prove [Q a] we can use 
     [apply H2] to instantiate the assumption to [P a -> Q a] and at the same 
-    time eliminate the implication so that it is left to prove [P a].
-*)
-apply H2.
+    time eliminate the implication so that it is left to prove [P a]. *)
+
+ apply H2.
+
 (** Now if we know [H1 : forall x:A,P x] and we want to show [P a], we use
     [apply H1] to prove it. After this the goal is completed. *)
+
 apply H1.
+
 (** In the last step we only instantiated the universal quantifier. *)
+
 Qed.
 
 (** 
@@ -118,7 +124,9 @@ and "all students are funny".
 
 Lemma AllAndCom : (forall x:A,P x /\ Q x) <-> (forall x:A, P x) /\ (forall x:A, Q x).
 split.
+
 (** Proving [->] *)
+
 intro H.
 split.
 intro a.
@@ -131,7 +139,9 @@ assert (pq : P a /\ Q a).
 apply H.
 destruct pq as [p q].
 exact q.
+
 (** Proving [<-] *)
+
 intro H.
 destruct H as [p q].
 intro a.
@@ -181,15 +191,221 @@ Qed.
 
 Lemma ExistsMono : (exists x:A,P x) -> (forall x:A,P x -> Q x) -> exists x:A, Q x.
 intros H1 H2.
+
 (** We first eliminate or assumption. *)
+
 destruct H1 as [a p].
+
 (** And now we introduce the existential. *)
+
 exists a.
 apply H2.
+
 (** In the last step we instantiated a universal quantifier. *)
+
 exact p.
 Qed.
 
+(** 
+So to summarize:
+   - introduction for [exists]
+     To show [exists x:A,P] we say [exists a] where [a : A] is any expression of type [a].
+     It remains to show [P] where any free occurence of [x] is replaced by [a].
+   - elimination for [exists]
+     If we know [H : exists x:A,P] we can use [destruct H as [a p]] which destructs [H]
+     intwo two assumptions: [a : A] and [p : P'] where [P'] is obtained from [P] by
+     replacing all free occurences of [x] in [P] by [a].
+
+Next we are going to show that [exists] _commutes with_ [\/]. That is
+we are going to show [(exists x:A,P x \/ Q x) <-> (exists x:A, P x) \/ (exits x:A, Q x)]
+that is "there is a student who is clever or funny" is equivalent to "there is a clever student
+or there is a funny student".
+*)
+
+Lemma ExOrCom : (exists x:A,P x \/ Q x) <-> (exists x:A, P x) \/ (exists x:A, Q x).
+split.
+
+(** Proving [->] *)
+
+intro H.
+
+(** It would be too early to use the introduction rules now.
+    We first need to analyze the assumptions. This is a common
+    situation. *)
+
+destruct H as [a pq].
+destruct pq as [p | q].
+
+(** First case [P a]. *)
+
+left.
+exists a.
+exact p.
+
+(** Second case [Q a]. *)
+
+right.
+exists a.
+exact q.
+
+(** Proving [<-] *)
+
+intro H.
+destruct H as [p | q].
+
+(** First case [exists x:A,P x] *)
+
+destruct p as [a p].
+exists a.
+left.
+exact p.
+
+(** Second case [exists x:A,Q x] *)
+
+destruct q as [a q].
+exists a.
+right.
+exact q.
+Qed.
+
+(** * Another Currying Theorem *)
+
+(** There is also a currying theorem in predicate logic which exploits 
+    the relation between [->] and [forall] on the one hand and 
+    [/\] and exists on the other. That is we can show that 
+    [forall x:A,P x -> S] is equivalent to [(exists x:A,P x) -> S].
+    Intuitively, think of [S] to be "the lecturer is happy". Then
+    the left hand side can be translated as "If there is any student
+    who is clever, then the lecturer is happy" and the right hand side
+    as "If there exists a student who is clever, then the lecturer is happy".
+    The relation to the propositional currying theorem can be seen, when we
+    replace [forall] by [->] and [exists] by [/\].
+    
+    To prove this tautology we assume an additional proposition.
+*)
+
+Variable S : Prop.
+
+Lemma Curry : (forall x:A,P x -> S) <-> ((exists x:A,P x) -> S).
+split.
+
+(** proving [->] *)
+
+intro H.
+intro p.
+destruct p as [a p].
+
+(** With our limited knowledge of Coq's tactic language we need
+    to instantiate [H] using [assert]. There are better ways 
+    to do this... We will see later.*)
+
+assert (H' : P a -> S).
+apply H.
+apply H'.
+exact p.
+
+(** proving [<-]. *)
+
+intro H.
+intros a p.
+apply H.
+exists a.
+exact p.
+Qed.
+
+(** * Equality *)
+
+(** Predicate logic comes with one generic relation which is defined for 
+    all sets: equality ([=]). Given two expressions [a,b : A] we write 
+    [a = b : Prop] for the proposition that [a] and [b] are equal,
+    that is they describe the same object. 
+
+    How can we prove an equality? That is what is the introduction rule for equality? 
+    We can prove that every expression is [a : A] is equal to itself [a = a]
+    using the tactic [reflexivity]. How can we use an assumption
+    [H : a = b]? That is how can we eliminate equality? If we want to
+    prove a goal [P] which contains the expression [a] we can use
+    [rewrite H] to _rewrite_ all those [a]s into [b]s.
+
+    To demonstrate how to use these tactics we show that equality is
+    an _equivalence relation_ that is, it is:
+    - reflexive ([forall a:A, a = a])
+    - symmetric ([forall a b:A, a=b -> b=a])
+    - transitive ([forall a b c:A, a=b -> b=c -> a=c].
+*)
+
+Lemma eq_refl : forall a:A, a = a.
+intro a.
+
+(** Here we just invoke the reflexivity tactic. *)
+
+reflexivity.
+Qed.
+
+Lemma eq_sym : forall a b:A, a=b -> b=a.
+intros a b H.
+
+(** Here we use rewrite to reduce the goal. *)
+
+rewrite H.
+reflexivity.
+Qed.
+
+Lemma eq_trans : forall a b c:A, a=b -> b=c -> a=c.
+intros a b c ab bc.
+rewrite ab.
+exact bc.
+Qed.
+
+
+(** Do you know any other equivalence relations? *)
+
+(** There are soe other tactics which are useful when working with equality. We will see their
+    uses later.
+    - [rewrite<-], like rewrite but rewrites form right to left. That is, if the 
+      goal is [H : a = b] then [rewrite H] then changes all occurences of [b] in
+      the current goal into [a].
+*)    
+
+
+(** * Classical Predicate Logic *)
+
+(** The principle of the excluded middle [classic P : P \/ ~P] has many important 
+    applications in predicate logic. As an example we show that [exists x:A,P x]
+    is equivalent to [~ forall x:A, ~ P x]. 
+
+    Instead of using [classic] directly we use the derivable principle
+    [NNPP : ~ ~ P -> P] which is also defined in the [Coq.Logic.Classical].
+*)
+
+Require Import Coq.Logic.Classical.
+
+Lemma ex_from_forall : (exists x:A, P x) <-> ~ forall x:A, ~ P x.
+split.
+
+(** proving [->] *)
+
+intro ex.
+intro H.
+destruct ex as [a p].
+assert (npa : ~ (P a)).
+apply H.
+apply npa.
+exact p.
+
+(** proving [<-] *)
+
+intro H.
+apply NNPP.
+(** Instead of proving [exists x:A,P x] which is hard,
+    we show [~~ exists x:A,P x] which is easier. *)
+intro nex.
+apply H.
+intros a p.
+apply nex.
+exists a.
+exact p.
+Qed.
 
 
 

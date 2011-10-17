@@ -119,7 +119,6 @@ apply pq.
 
 (** And now it only remains to prove [P] which is one of our assumptions - hence we can use [exact] again. 
 *)
-
 exact p.
 Qed.
 
@@ -172,14 +171,13 @@ Qed.
 
 Lemma andCom : P /\ Q -> Q /\ P.
 intro pq.
+destruct pq as [p q].
 split.
 
 (** Now we need to use the assumption [P /\ Q]. We destruct it into two assumptions: [P] and [Q].
 [destruct] allows us to name the new assumptions. *)
 
-destruct pq as [p q].
 exact q.
-destruct pq as [p q].
 exact p.
 Qed.
 
@@ -201,6 +199,7 @@ All the steps we have already explained so I won't comment. It is a good idea to
 *)
 
 Lemma curry : (P /\ Q -> R) <-> (P -> Q -> R).
+unfold iff.
 split.
 intros H p q.
 apply H.
@@ -328,6 +327,7 @@ Qed.
 *)
 
 Lemma incons : ~ ( P /\ ~ P).
+unfold not.
 intro h.
 destruct h as [p np].
 apply np.
@@ -338,10 +338,20 @@ Qed.
 (** Another example is to show that [P] implies [~ ~ P]. *)
 
 Lemma p2nnp : P -> ~ ~ P.
+unfold not.
 intros p np.
 apply np.
 exact p.
 Qed.
+
+(*
+Lemma nnp2p : ~ ~ P -> P.
+unfold not.
+intro nnp.
+assert (f : False).
+apply nnp.
+intro p.
+*)
 
 (** * Classical Reasoning *)
 
