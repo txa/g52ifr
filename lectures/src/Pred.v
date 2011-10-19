@@ -1,6 +1,7 @@
 (* Copyright (c) 2011, Thorsten Altenkirch *)
 
-(** %\chapter{Predicate Logic}% *)
+(** %\chapter{%#<H0>#Predicate Logic%}%#</H0># *)
+
 Section pred.
 
 (** Predicate logic extends propositional logic: we can talk about 
@@ -23,7 +24,7 @@ Variables A B : Set.
 
     Next we also assume some predicate variables, we let P
     and Q be properties of A (e.g. P x may mean P is clever
-    and Q x means x is funny.
+    and Q x means x is funny).
 *)
 
 Variables P Q : A -> Prop.
@@ -60,7 +61,7 @@ Variable R : A -> B -> Prop.
     clever student is funny, then all students are funny. In predicate
     logic we write [(forall x:A,P x) -> (forall x:A,P x -> Q x) -> forall x:A, P x].
 
-    We introduce some new syntactic cinventions: the scope of an forall
+    We introduce some new syntactic conventions: the scope of an forall
     always goes as far as possible. That is we read [forall x:A,P x /\ Q]
     as [forall x:A, (P x /\ Q)]. Given this could we have saved any parentheses
     in the example above without changing the meaning?
@@ -83,7 +84,7 @@ intro a.
     [apply H2] to instantiate the assumption to [P a -> Q a] and at the same 
     time eliminate the implication so that it is left to prove [P a]. *)
 
- apply H2.
+apply H2.
 
 (** Now if we know [H1 : forall x:A,P x] and we want to show [P a], we use
     [apply H1] to prove it. After this the goal is completed. *)
@@ -96,15 +97,15 @@ Qed.
 
 (** 
 So to summarize:
-   - introduction for [forall]
+   - introduction for [forall]:
      To show [forall x:A,P x] we say [intro a] which introduces an assumption [a:A]
      and it is left to show [P] where each free occurence of [x] is replaced by [a].
-   - elimination for [forall]
+   - elimination for [forall]:
      We only describe the simplest case: If we know [H : forall x:A,P] and we want to 
      show P where [x] is replaced by [a] we use [apply H] to prove [P a]. 
 
 When I say that each free occurence of [x] in the proposition [P] is replaced by [a],
-I mean that occurences of [x] which are in the scope of another quantifier (these are clalled bound) are not affected. E.g.
+I mean that occurences of [x] which are in the scope of another quantifier (these are called bound) are not affected. E.g.
 if [P] is [Q x /\ forall x:A,R x x] then the only free occurence of [x] is the one in [Q x]. That is we obtain [Q a  /\ forall x:A,R x x]. The occurences of [x] in [forall x:A,R x x] are bound.
 
 We can also use [intros] here. That is if the current goal is [forall x:A,P x -> Q x] then 
@@ -150,9 +151,28 @@ apply p.
 apply q.
 Qed.
 
-(** This proof is quite lengthy and I even had to use [assert]. You are welcome to find a shorter proof (but without using any more sophisticated tactics). *)
+(** This proof is quite lengthy and I even had to use [assert]. There is a shorter proof, if we use [edestruct] instead of [destruct].  
+     The "e" version of tactics introduce metavariables (visible as ?x) which are instantiated 
+    when we are using them. See the Coq reference manual for details.
 
-(** Another question: Does [forall] also commute with [\/]? That is does 
+    I only do the [->] direction using [edestruct], the other one stays the same.
+*)
+
+Lemma AllAndComE : (forall x:A,P x /\ Q x) -> (forall x:A, P x) /\ (forall x:A, Q x).
+
+(** Proving [->] *)
+
+intro H.
+split.
+intro a.
+edestruct H as [p q].
+apply p.
+intro a.
+edestruct H as [p q].
+apply q.
+Qed.
+
+(** Question: Does [forall] also commute with [\/]? That is does 
     [(forall x:A,P x \/ Q x) <-> (forall x:A, P x) \/ (forall x:A, Q x)]
     hold? If not, how can you show that?
 *)
@@ -175,7 +195,7 @@ Qed.
     logic we write [(exists x:A,P x) -> (forall x:A,P x -> Q x) -> exists x:A, P x].
 
     Btw, we are not changing the 2nd quantifier, it stays [forall]. What would happen
-    if we would replace it by [exists]
+    if we would replace it by [exists]?
 
     The syntactic conventions for [exists] are the same as for [forall]: the scope of an [exists]
     always goes as far as possible. That is we read [exists x:A,P x /\ Q]
@@ -313,6 +333,20 @@ exists a.
 exact p.
 Qed.
 
+(** As before the explicit instantiation using [assert] can be avoided by using the "e" version of a tactic. In
+    this case it is [eapply]. Again, I refer to the Coq reference manual for details. I only do one direction, the other one stays the same.*)
+
+Lemma CurryE : (forall x:A,P x -> S) -> ((exists x:A,P x) -> S).
+
+(** proving [->] *)
+
+intro H.
+intro p.
+destruct p as [a p].
+eapply H.
+apply p.
+Qed.
+
 (** * Equality *)
 
 (** Predicate logic comes with one generic relation which is defined for 
@@ -360,11 +394,15 @@ Qed.
 
 (** Do you know any other equivalence relations? *)
 
-(** There are soe other tactics which are useful when working with equality. We will see their
+(* There are some other tactics which are useful when working with equality. We will see their
     uses later.
     - [rewrite<-], like rewrite but rewrites form right to left. That is, if the 
-      goal is [H : a = b] then [rewrite H] then changes all occurences of [b] in
+      goal is [H : a = b] then [rewrite<- H] then changes all occurences of [b] in
       the current goal into [a].
+    - [pattern] massages the current goal so that the focus is on a certain subterm.
+      This is important, if there are several occurences of the term to be reqritten but 
+      we want to change only one. So [pattern t] restricts the effect of [rewrite] or
+      [rewrite<-] to the subterm [t].
 *)    
 
 
@@ -375,7 +413,7 @@ Qed.
     is equivalent to [~ forall x:A, ~ P x]. 
 
     Instead of using [classic] directly we use the derivable principle
-    [NNPP : ~ ~ P -> P] which is also defined in the [Coq.Logic.Classical].
+    [NNPP : ~ ~ P -> P] which is also defined in [Coq.Logic.Classical].
 *)
 
 Require Import Coq.Logic.Classical.
