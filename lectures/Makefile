@@ -30,9 +30,9 @@ src : $(VS)
 latex/%.pdf: latex/%.tex 
 
 latex/g52ifr.pdf: latex/g52ifr.tex $(TEX)
-	cd latex ; pdflatex g52ifr ; pdflatex g52ifr 
+	cd latex ; pdflatex g52ifr ; pdflatex g52ifr ; cp g52ifr.pdf ../../www
 
 html: Makefile $(VS) 
 	mkdir -p ../www/html
 	cd src; coqdoc --interpolate $(VS_DOC) -d ../../www/html
-
+	
