@@ -59,7 +59,7 @@ Variable R : A -> B -> Prop.
     property [P] has also the property [Q] then all alements of [A]
     have the property [Q]. That is if all students are clever, and every 
     clever student is funny, then all students are funny. In predicate
-    logic we write [(forall x:A,P x) -> (forall x:A,P x -> Q x) -> forall x:A, P x].
+    logic we write [(forall x:A,P x) -> (forall x:A,P x -> Q x) -> forall x:A, Q x].
 
     We introduce some new syntactic conventions: the scope of an forall
     always goes as far as possible. That is we read [forall x:A,P x /\ Q]
@@ -192,7 +192,7 @@ Qed.
     property [P] has also the property [Q] then there is an elements of [A]
     having the property [Q]. That is if there is a clever student, and every 
     clever student is funny, then there is a funny student. In predicate
-    logic we write [(exists x:A,P x) -> (forall x:A,P x -> Q x) -> exists x:A, P x].
+    logic we write [(exists x:A,P x) -> (forall x:A,P x -> Q x) -> exists x:A, Q x].
 
     Btw, we are not changing the 2nd quantifier, it stays [forall]. What would happen
     if we would replace it by [exists]?

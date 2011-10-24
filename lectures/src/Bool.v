@@ -1,17 +1,19 @@
 (* Copyright (c) 2011, Thorsten Altenkirch *)
 
-(** %\chapter{%#<H0>#FiniteSets%}%#</H0># *)
+(** %\chapter{%#<H0>#Bool%}%#</H0># *)
 
-Section finset.
+Section bool.
 
-(** * Bool *)
+(** * Defining bool and operations *)
 
 (** We define [bool : Set] as a finite set with two elements:
-    [true : bool] and [false : bool] *)
+    [true : bool] and [false : bool]. In set theoretic notation
+    we would write [bool] = { [true] , [false] }. In Coq we write: *)
 
 Inductive bool : Set :=
   | true : bool
-  | false : bool.
+  | false: bool.
+
 
 (** We define the function [negb : bool -> bool] (boolean negation) by pattern
     matching using the [match] construct. *)
@@ -31,6 +33,7 @@ Definition negb (b:bool) : bool :=
 *)
 
 Eval compute in (negb true).
+
 (** The evaluator replaces
     
    [negb true]
@@ -46,7 +49,9 @@ Eval compute in (negb true).
 
     [false]
 *)
+
 Eval compute in negb (negb true).
+
 (** We know already that [negb true] evaluates to
     [false] hence [negb (negb true)] evaluates to
     [negb false] which in turn evaluates to [true].
@@ -65,9 +70,11 @@ Definition orb (b c : bool) : bool :=
 
     [Require Import Coq.Bool.Bool.]
 
-    which defines all the abive and much more and indeeds
+    which defines all the above and much more and indeeds
     introduces the abbreviations && and || for andb and orb.
 *)
+
+(** * Reasoning about Bool *)
 
 (** We can now use predicate logic to show properties of 
     boolean functions. As a first example we show that the
@@ -84,16 +91,20 @@ Definition orb (b c : bool) : bool :=
 Lemma negb_idem : forall b :bool, negb (negb b) = b.
 intro b.
 destruct b.
+
 (** Case for [b = true] *)
 (** Our goal is negb (negb true) = true. 
     As we have already seen [negb (negb true)] evaluates
     to true. Hence this goal can be proven using [reflexivity].
     Indeed, we can make this visible by using [simpl].
 *)
+
 simpl.
 reflexivity.
+
 (** Case for [b = false] *)
 (** This case is exactly the same as before. *)
+
 simpl.
 reflexivity.
 Qed.
@@ -164,17 +175,85 @@ Definition Istrue (b : bool) : Prop :=
 Lemma diff_true_false : 
       ~ (true = false).
 intro h.
+
 (** We now need to use a new tactic to replace
     [False] by [IsTrue False]. This is possible
     because [IsTrue False] evaluates to [false].
     We are using [fold] which is the inverse to 
     [unfold] which we have seen earlier. *)
+
 fold (Istrue false).
+
 (** Now we can simply apply the equation [h] backwards. *)
+
 rewrite<- h.
+
 (** Now by unfolding we can replace [Istrue true] by [True] *)
+
 unfold Istrue.
+
 (** Which is easy to prove.*)
+
 split.
 Qed.
+
+(** Actually there is a tactic [discriminate] which implements 
+    this proof and which allows us to prove directly that any 
+    two different constructors (like [true] and [false]) are
+    different. We shall use [discriminate] in future.
+*)
+
+(** * Reflection *)
+
+(** We notice that there is a logical operator [/\] which acts
+    on [Prop] and a boolean operator [andb] (or [&&]) which acts
+    on [bool]. How are the two related?
+
+    We can use [/\] to specify [andb], namely we say that
+    [andb x y = true] is equivalent to [x = true] and [y = true]. 
+    That is we prove:
+
+*)
+
+Lemma and_ok : forall x y : bool, 
+  andb x y = true <-> x = true /\ y = true.
+intros x y.
+split.
+
+(** [->] *)
+
+destruct x.
+
+(** x=true*)
+
+intro h.
+split.
+reflexivity.
+exact h.
+
+(** Why did the last step work? *)
+
+(** x = false *)
+
+intro h.
+discriminate h.
+
+(** [<-] *)
+
+intro h.
+destruct h as [hx hy].
+rewrite hx.
+exact hy.
+
+Qed.
+
+
+
+
+
+
+
+
+
+
 
