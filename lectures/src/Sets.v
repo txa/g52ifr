@@ -8,6 +8,9 @@ Section Sets.
 
 Open Scope type_scope.
 Set Implicit Arguments.
+Implicit Arguments inl [A B].
+Implicit Arguments inr [A B].
+
 
 (** * Finite Sets *)
 
@@ -23,12 +26,13 @@ Set Implicit Arguments.
     | c1 : C
     | c2 : C
     ...
-    | cn : Set. ]
+    | cn : C. ]
 
     As a special example we define the empty set:
 *)
-    
+  
 Inductive empty_set : Set := .
+
 
 (** As an example for finite sets, we consider the game of chess.
     We need to define the colours, the different type of pieces,
@@ -101,6 +105,7 @@ Definition oneUp (y : YCoord) : YCoord :=
     [a : A] and [b : B]. In Coq we define
 *)
 
+(*
 Inductive prod(A B : Set) : Set :=
   | pair : A -> B -> prod A B.
 
@@ -111,6 +116,7 @@ Inductive prod(A B : Set) : Set :=
 
 Notation "A * B" := (prod A B) : type_scope.
 Notation "( a , b )" := (pair a b).
+*)
 
 (** As an example we define the set of chess pieces
     and coordinates: *)
@@ -135,15 +141,22 @@ Definition fst(A B : Set)(p : A * B) : A :=
    | (a , b) => a
    end. *)
 
+
 Definition fst(A B : Set)(p : A * B) : A :=
    match p with
    | (a , b) => a
    end.
 
+
 Definition snd(A B : Set)(p : A * B) : B :=
    match p with
-   | pair a b => b
+   | (a , b) => b
    end.
+
+Eval compute in fst blackKnight.
+Eval compute in snd blackKnight.
+
+Eval compute in (fst blackKnight,snd blackKnight).
 
 (** A general theorem about products is that if we take
     apart an element using projections and then put it 
@@ -166,6 +179,7 @@ intros A B p.
     a product the same way as we have taken apart conjunctions.
 *)
 destruct p as [a b].
+simpl.
 (** Can you simplify this goal in your head?
     Yes simpl will do the job but why?
 *)
@@ -191,21 +205,23 @@ Qed.
     because [inl true] is different from [inr true] while 
     in the union of bool with bool there are only 2 elements since
     there is only one copy of [true]. Actually, the union of
-    sets does not exist in Coq.
-  
+    sets does not exist in Coq. *)
+
+(*  
     We define [+] in Coq:
-*)
+
 Inductive sum (A B:Set) : Set :=
   | inl : A -> sum A B
   | inr : B -> sum A B.
 
 Notation "x + y" := (sum x y) : type_scope.
+*)
 
-(** We have to tell Coq to figure out the sets itself. 
+(* We have to tell Coq to figure out the sets itself. 
     Again the details of these incantations are not important for the course. See the reference manual if you want to know.*)
 
-Implicit Arguments inl [A B].
-Implicit Arguments inr [A B].
+
+
 
 (** As an example we use disjoint union to define the set
     field which can either be a piece or empty. The second
@@ -279,7 +295,7 @@ chess game. *)
     operation we could also have used [fun]:
 *)
 
-Definition negb : bool -> bool
+Definition negb' : bool -> bool
   := fun (b : bool) => match b with
                        | true => false
                        | false => true
@@ -362,3 +378,4 @@ intro b.
 reflexivity.
 Qed.
 
+End Sets.

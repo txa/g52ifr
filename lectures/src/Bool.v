@@ -2,20 +2,25 @@
 
 (** %\chapter{%#<H0>#Bool%}%#</H0># *)
 
-Section bool.
+Section Bool.
 
 (** * Defining bool and operations *)
 
 (** We define [bool : Set] as a finite set with two elements:
     [true : bool] and [false : bool]. In set theoretic notation
-    we would write [bool] = { [true] , [false] }. In Coq we write: *)
+    we would write [bool] = { [true] , [false] }. 
+*)
 
+(*
+In Coq we write: 
+[
 Inductive bool : Set :=
   | true : bool
   | false: bool.
+]
+*)
 
-
-(** We define the function [negb : bool -> bool] (boolean negation) by pattern
+(** The function [negb : bool -> bool] (boolean negation) can be defined by pattern
     matching using the [match] construct. *)
 
 Definition negb (b:bool) : bool :=
@@ -23,6 +28,7 @@ Definition negb (b:bool) : bool :=
   | true => false
   | false => true
   end.
+
 
 (** This should be familiar from g51fun - in Haskell [match]
     is called [case]. Indeed Haskell offers a more convenient
@@ -65,13 +71,10 @@ Definition andb(b c:bool) : bool :=
 Definition orb (b c : bool) : bool :=
   if b then true else c.
 
-(** It is maybe a good point to remark that Booleans are part
-    of Coq's library and can be imported using
-
-    [Require Import Coq.Bool.Bool.]
-
-    which defines all the above and much more and indeeds
-    introduces the abbreviations && and || for andb and orb.
+(** The Coq prelude also defines the infix operators
+   && and || for andb and orb respectively, with && having
+   higher precedence than ||. Note however, that you cannot
+   use ! (for negb) since this is used for other purposes in Coq.
 *)
 
 (** * Reasoning about Bool *)
@@ -146,7 +149,8 @@ Qed.
     This is easy to prove:
 *)
 
-Lemma true_or_false : forall b : bool, b = true \/ b = false.
+Lemma true_or_false : forall b : bool, 
+       b = true \/ b = false.
 intro b.
 destruct b.
 (** b = true *)
@@ -229,6 +233,7 @@ destruct x.
 intro h.
 split.
 reflexivity.
+simpl in h.
 exact h.
 
 (** Why did the last step work? *)
@@ -236,6 +241,7 @@ exact h.
 (** x = false *)
 
 intro h.
+simpl in h.
 discriminate h.
 
 (** [<-] *)
@@ -247,9 +253,7 @@ exact hy.
 
 Qed.
 
-
-
-
+End Bool.
 
 
 
