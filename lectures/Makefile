@@ -1,4 +1,4 @@
-MODULES       := Intro Prop Pred Bool
+MODULES       := Intro Prop Pred Bool Sets
 TEX           := $(MODULES:%=latex/%.v.tex)
 VS            := $(MODULES:%=src/%.v)
 VS_DOC        := $(MODULES:%=%.v)
@@ -27,6 +27,9 @@ latex/Bool.v.tex: Makefile src/Bool.v
 	cd src ; coqdoc --interpolate --latex --body-only -s \
 		Bool.v -o ../latex/Bool.v.tex
 
+latex/Sets.v.tex: Makefile src/Sets.v 
+	cd src ; coqdoc --interpolate --latex --body-only -s \
+		Sets.v -o ../latex/Sets.v.tex
 
 src : $(VS)
 	mkdir -p ../www/src

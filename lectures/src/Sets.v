@@ -5,6 +5,7 @@
 Section Sets.
 
 (** Some magic incantations... *)
+
 Open Scope type_scope.
 Set Implicit Arguments.
 
@@ -17,6 +18,7 @@ Set Implicit Arguments.
     C = { c1, c2 , .. , cn } for a finite set.
 
     In Coq we write
+
     [Inductive C : Set := 
     | c1 : C
     | c2 : C
@@ -76,7 +78,7 @@ Inductive YCoord : Set :=
     [oneUp : YCoord -> YCoord]
     which increases the y coordinates by 1. We have to decide
     what to do when we reach the 8th row. Here we just get
-    stuck. There are better solutions we will see later.
+    stuck. 
 *)
 
 Definition oneUp (y : YCoord) : YCoord :=
@@ -93,7 +95,7 @@ Definition oneUp (y : YCoord) : YCoord :=
 
 (** * Products *)
 
-(** Given to sets [A B : Set] we define a new set 
+(** Given two sets [A B : Set] we define a new set 
     [A * B : Set] which is called the _product_ of 
     [A] and [B]. It is the set of pairs [(a,b)] where
     [a : A] and [b : B]. In Coq we define
@@ -102,10 +104,13 @@ Definition oneUp (y : YCoord) : YCoord :=
 Inductive prod(A B : Set) : Set :=
   | pair : A -> B -> prod A B.
 
+(** We introduce a more convenient notation. If you are interested in
+   the details of the notation mechanism look it up in the Coq reference manual.
+   It is not needed for the course.
+*)
 
 Notation "A * B" := (prod A B) : type_scope.
 Notation "( a , b )" := (pair a b).
-
 
 (** As an example we define the set of chess pieces
     and coordinates: *)
@@ -174,7 +179,7 @@ Qed.
 
 (** * Disjoint union *)
 
-(** Given to sets [A B : Set] we define a new set 
+(** Given two sets [A B : Set] we define a new set 
     [A + B : Set] which is called the _disjoint union_ of 
     [A] and [B]. Elements of [A + B] are either [inl a]
     where [a : A] or [inr b] where [b : B]. Here [inl]
@@ -196,7 +201,9 @@ Inductive sum (A B:Set) : Set :=
 
 Notation "x + y" := (sum x y) : type_scope.
 
-(** We have to tell Coq to figure out the sets itself. *)
+(** We have to tell Coq to figure out the sets itself. 
+    Again the details of these incantations are not important for the course. See the reference manual if you want to know.*)
+
 Implicit Arguments inl [A B].
 Implicit Arguments inr [A B].
 
@@ -242,17 +249,33 @@ Definition swap(A B : Set)(x : A + B) : B + A :=
 
 (** * Function sets *)
                 
-(** Given to sets [A B : Set] we define a new set 
+(** Given two sets [A B : Set] we define a new set 
     [A -> B : Set], the set of functions form [A] 
     to [B]. We have already seen one way to define
     functions, whenever we have defined an operation
     we have actually defined a function. However, as
     you have already seen in Haskell, we can define
     functions directly using lambda abstraction. The
-    syntax is [fun (x : A) => b] where [b] is an expression
-    in [B] which may refer to [x].
+    syntax is [fun x => b] where [b] is an expression
+    in [B] which may refer to [x : A].*)
 
-    As an example instead of defining [negb] as an
+(** In the case of our chess example we can use functions to define
+   a chess board as a function form [Coord] to [Field], 
+   this function would give us the content of a field for 
+   any coordinate. *)
+
+Definition Board : Set := Coord -> Field.
+
+(** A particular simple example is the empty board: *)
+
+Definition EmptyBoard : Board := fun x => emptyField.
+
+(** I leave it as an exercise to construct the initial board for a
+chess game. *)
+
+
+(**
+    As another example instead of defining [negb] as an
     operation we could also have used [fun]:
 *)
 
@@ -262,11 +285,80 @@ Definition negb : bool -> bool
                        | false => true
                        end.
 
-(** The [fun] notation enables us to define 
-    _higher order functions_, i.e. functions which 
-    take functions as arguments. An example is the 
-    function [isConst] which determines wether a given
-    function [f : bool -> bool] is constant. 
+(** Using [fun] is especially useful when we are dealing with _higher
+   order functions_, i.e. function which take functions as
+   arguments. As an example let us define the function [isConst] which
+   determines wether a given function [f : bool -> bool] is
+   constant. *)
 
-Definition isConst 
-*) 
+Open Scope bool_scope.
+
+Definition isConst (f : bool -> bool) : bool :=
+  (f true) && (f false) || negb (f true) && negb (f false).
+
+(** What will Coq answer when asked to evaluate the terms below. 
+    In three cases we are using [fun] to construct the argument.
+    Could we have done this in the 1st case as well?
+ *)
+
+Eval compute in isConst negb.
+Eval compute in isConst (fun x => false).
+Eval compute in isConst (fun x => true).
+Eval compute in isConst (fun x => x).
+
+(** Are there any other cases to consider ? *)
+
+(** In general, if [A],[B] are finite sets with [m] and [n] elements,
+   how many elements are in [A -> B]? Actually we need to assume the
+   axiom of extensionality to get the right answer. This axiom states that any 
+   two functions which are equal for all arguments are equal.
+   *)
+
+Axiom ext : forall (A B : Set)(f g : A -> B), (forall x:A,f x = g x) -> f = g.
+
+(** * The Curry Howard Correspondence *)
+
+(** There is a close correspondence between sets and propositions.  We
+   may translate a proposition by the set of its proofs. The question
+   wether a proposition holds corresponds then to finding an element
+   which lives in the corresponding set. Indeed, this is what Coq's proof objects 
+   are based upon. For propositional logic the translation works as follows:
+   - conjunction ([/\]) is translated as product ([*]),
+   - disjunction ([\/]) is translated as disjoint union ([+]),
+   - implication ([->]) is translated as function set ([->]).
+   I leave it to you to figure out what to translate [True] and [False] with.
+
+   As an example we consider the currying theorm for propositional logic. 
+   Applying the translation we obtain:
+*)
+
+Definition curry (A B C : Set) : ((A * B -> C) -> (A -> B -> C)) :=
+  fun f => fun a => fun b => f (a , b).
+
+Definition curry' (A B C : Set) : (A -> B -> C) -> (A * B -> C) :=
+  fun g => fun p => g (fst p) (snd p).
+
+(** Indeed, [curry] and [curry'] do not just witness a logical equivalence
+   but they constitute an _isomorphism_. That is if we go back and forth we end up 
+   with the lement we started. We will need the axiom of extensionality.
+   To make this precise we get: *)
+
+Lemma curryIso1 : forall A B C : Set, forall f : A * B -> C,
+  f = (curry' (curry f)).
+intros A B C f.
+apply ext.
+intro p.
+destruct p.
+reflexivity.
+Qed.
+
+Lemma curryIso2 :  forall A B C : Set, forall g : A -> B -> C,
+  g = (curry (curry' g)).
+intros A B C g.
+apply ext.
+intro a.
+apply ext.
+intro b.
+reflexivity.
+Qed.
+
