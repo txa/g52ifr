@@ -102,20 +102,7 @@ Definition oneUp (y : YCoord) : YCoord :=
 (** Given two sets [A B : Set] we define a new set 
     [A * B : Set] which is called the _product_ of 
     [A] and [B]. It is the set of pairs [(a,b)] where
-    [a : A] and [b : B]. In Coq we define
-*)
-
-(*
-Inductive prod(A B : Set) : Set :=
-  | pair : A -> B -> prod A B.
-
-(** We introduce a more convenient notation. If you are interested in
-   the details of the notation mechanism look it up in the Coq reference manual.
-   It is not needed for the course.
-*)
-
-Notation "A * B" := (prod A B) : type_scope.
-Notation "( a , b )" := (pair a b).
+    [a : A] and [b : B].
 *)
 
 (** As an example we define the set of chess pieces
@@ -134,13 +121,6 @@ Definition e2 : Coord := (xe , y2).
 (** On Products we have some generic operations called
     _projections_ which extract the components of a product.
 *)
-
-(* Why can't I use A*B here ? 
-Definition fst(A B : Set)(p : A * B) : A :=
-   match p with
-   | (a , b) => a
-   end. *)
-
 
 Definition fst(A B : Set)(p : A * B) : A :=
    match p with
@@ -207,21 +187,6 @@ Qed.
     there is only one copy of [true]. Actually, the union of
     sets does not exist in Coq. *)
 
-(*  
-    We define [+] in Coq:
-
-Inductive sum (A B:Set) : Set :=
-  | inl : A -> sum A B
-  | inr : B -> sum A B.
-
-Notation "x + y" := (sum x y) : type_scope.
-*)
-
-(* We have to tell Coq to figure out the sets itself. 
-    Again the details of these incantations are not important for the course. See the reference manual if you want to know.*)
-
-
-
 
 (** As an example we use disjoint union to define the set
     field which can either be a piece or empty. The second
@@ -252,7 +217,7 @@ Definition swap(A B : Set)(x : A + B) : B + A :=
 
 (** The same question as for products: If [A] has 
    [m] elements and [B] has [n] elements, how many 
-   elements are in [A + B}? 
+   elements are in [A + B]? 
 *)
 
 (** Disjoint unions are sometimes called _coproducts_
