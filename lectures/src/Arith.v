@@ -34,21 +34,24 @@ Section Arith.
 
     For illustration we are going to prove these principles:
 *)
+
 Lemma peano7 : forall n:nat, S n <> 0.
 intro n.
 intro h.
+
 (** This is basically the same problem as proving [true <> false], we
     could apply the same technique here. To avoid repetetion we just
     use the [discriminate] tactic.
 *)
+
 discriminate h.
 Qed.
   
 (** To prove the next axiom, it is useful to define the inverse to
-    S, the predecessor function P. We arbitrarily decide that the 
+    S, the predecessor function pred. We arbitrarily decide that the 
     predecessor of 0 is 0. *)
 
-Definition P (n : nat) : nat :=
+Definition pred (n : nat) : nat :=
   match n with
   | 0 => 0
   | S n => n
@@ -56,12 +59,16 @@ Definition P (n : nat) : nat :=
   
 Lemma peano8 : forall m n:nat, S m = S n -> m = n.
 intros m n h.
-(** By folding with [P] we can change the current goal so that we can
+
+(** By folding with [pref] we can change the current goal so that we can
     apply our hypothesis. *)
-fold (P (S m)).
+
+fold (pred (S m)).
 rewrite h.
+
 (** And now we just have to unfold. simpl would have done the job too. *)
-unfold P.
+
+unfold pred.
 reflexivity.
 Qed.
 
@@ -178,14 +185,20 @@ Qed.
 
 Lemma plus_n_O : forall n:nat, n = n + 0.
 intro n.
+
 (** This one cannot be proven by reflexivity.
     So we have to use induction. *)
+
 induction n.
+
 (** n = 0 
     This is easy. *)
+
 simpl.
 reflexivity.
+
 (** We can simplify [S n + 0] using the definition of [+] *)
+
 simpl.
 rewrite<- IHn.
 reflexivity.
@@ -194,8 +207,10 @@ Qed.
 
 Lemma plus_assoc : forall (l m n:nat),l + (m + n) = (l + m) + n.
 intros l m n.
+
 (** There seems to be quite a choice what to do induction over:
     [l],[m],[n] but only one of them works. Why? *)
+
 induction l.
 simpl.
 reflexivity.
@@ -249,8 +264,113 @@ Notation "m <= n" := (leq m n).
       [forall l m n:nat, l <= m -> m <= n -> l <= n]
     - [<=] is antisymmetric.
       [forall l m : nat, l <= m -> m <= l -> m = l]
+
+  Any relation which is reflexive, transitive and antisymmetric is a _partial order_.
+  Here the word _partial_ is used to differentiate [<=] from a total order like [<].
+  We verify the first two properties in Coq, but leave antisymmetry as an exercise.
 *)
 
+Lemma le_refl: forall n:nat,n <= n.
+intro n.
+exists 0.
+reflexivity.
+Qed.
+
+Lemma le_trans : forall (l m n : nat), l <= m -> m <= n -> l <= n.
+intros l m n lm mn.
+destruct lm as [k klm].
+destruct mn as [j jmn].
+exists (k+j).
+rewrite<- plus_assoc.
+rewrite<- jmn.
+rewrite<- klm.
+reflexivity.
+Qed.
+
+
 (** * Decidable properties *)
+
+(** We say a predicate is [P : A -> Prop] _decidable_ if we can define
+    a boolean function [decP : A -> bool] which agrees with the predicate,
+    i.e. [forall a:A, P a <-> decP a = true]. This also extends to relations
+    in the obvious way.
+
+    We show below that equality on natural numbers is decidable. 
+    Do you know any undecidable predicates? 
+    Is equality always decidable?
+*)
+
+
+(** First we define the _decision procedure_. In the case of equality this is quite obvious:
+   we inspect both parameters, if they start with different constructors (i.e. 0 vs S) they are certainly 
+   not equal. If they are both [0] they are equal, and if they both start with [S] then we recursively 
+   compare the arguments. *)
+
+Fixpoint eqnat (m n : nat) {struct m} : bool :=
+  match m with 
+  | 0 => match n with 
+         | 0 => true
+         | S n' => false
+         end
+  | S m' => match n with 
+            | 0 => false
+            | S n' => eqnat m' n'
+            end
+  end.
+
+(** Now we show both direction seperately. The [->] direction just boils down
+   to showing that [eqnat] is reflexive. Why? *)
+
+Lemma eqnat_refl : forall m : nat,  eqnat m m = true.
+intro m.
+induction m.
+reflexivity.
+simpl.
+exact IHm.
+Qed.
+
+(** The other direction is more interesting and requires a _double induction_
+   over [m] and [n]. *)
+
+Lemma eqnat_compl : forall m n : nat, eqnat m n = true -> m = n.
+intro m.
+(** Here it would have been a mistake to do [intros m n]. Why? *)
+(** m = 0 *)
+induction m.
+intro n.
+induction n.
+(** n = 0 *)
+intro h.
+reflexivity.
+(** n = S n' *)
+intro h.
+simpl in h.
+discriminate h.
+(** m = S m' *)
+intro n.
+induction n.
+(** n = 0 *)
+intro h.
+discriminate h.
+(** n = S n' *)
+intro h.
+assert (h' : m = n).
+apply IHm.
+exact h.
+rewrite h'.
+reflexivity.
+Qed.
+
+(** Finally, we can prove the theorem that equality for natural numbers is decidable. *)
+
+Theorem eqnat_dec : forall m n : nat, m = n <-> eqnat m n = true.
+intros m n.
+split.
+intro h.
+rewrite h.
+apply eqnat_refl.
+apply eqnat_compl.
+Qed.
+
 
 End Arith.
