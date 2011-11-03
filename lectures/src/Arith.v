@@ -253,7 +253,7 @@ Qed.
     [m = k + n]. *)
 
 Definition leq (m n : nat) : Prop :=
-  exists k : nat, m = k + n.
+  exists k : nat, n = k + m.
 
 Notation "m <= n" := (leq m n).
 
@@ -280,13 +280,12 @@ Lemma le_trans : forall (l m n : nat), l <= m -> m <= n -> l <= n.
 intros l m n lm mn.
 destruct lm as [k klm].
 destruct mn as [j jmn].
-exists (k+j).
+exists (j+k).
 rewrite<- plus_assoc.
-rewrite<- jmn.
 rewrite<- klm.
+rewrite<- jmn.
 reflexivity.
 Qed.
-
 
 (** * Decidable properties *)
 
