@@ -7,6 +7,7 @@ Section Lists.
     
 (** * Arithmetic for lists *)
 Set Implicit Arguments.
+Load Arith.
 
 Inductive list (A : Set) : Set :=
  | nil : list A
@@ -189,6 +190,11 @@ Fixpoint leqb (m n : nat) {struct m} : bool :=
 Eval compute in leqb 3 4.
 Eval compute in leqb 4 3.
 
+Notation "m <= n" := (leq m n).
+
+Axiom leq1 : forall m n : nat, leqb m n = true -> m <= n.
+Axiom leq2 : forall m n : nat,  m <= n -> leqb m n = true.
+
 (*
    The main function of insertion sort is the function insert 
    which inserts a new element into an already sorted list:
@@ -220,111 +226,86 @@ Eval compute in sort (4::2::3::1::nil).
    We are going to verify sort. First we have to define what 
    we mean by sorted. *)
 
-Definition leqb_hd (n:nat)(ms : list nat) : bool :=
-  match ms with
-  | nil => true
-  | m::ms' => leqb n m
+Fixpoint Sorted (l : list nat) : Prop :=
+  match l with
+  | nil => True
+  | a :: m => Sorted m /\ a <= head a m
   end.
 
-Open Scope bool_scope.
+Axiom total : forall m n : nat, m <= n \/ n <= m.
 
-Fixpoint sorted (ms:list nat) : bool :=
-  match ms with
-  | nil => true
-  | m::ms' => leqb_hd m ms' && sorted ms'
-  end.
-
-Eval compute in sorted (4::2::3::1::nil).
-Eval compute in sorted (sort (4::2::3::1::nil)).
-
-(* to understand the proof, we continue with insert_lem below. When 
-   trying to prove insert_lem it turns out we need the following 
-   two auxilliary lemmas.
-*)
-
-Lemma leqb_total : forall m n:nat, leqb m n=false -> leqb n m = true.
-induction m.
-  intros.
-  inversion H.
-  intro n.
-  case n.
-  intros.
-  reflexivity.
-  intros.
-  simpl. 
-  apply IHm.
-  simpl in H.
-  assumption.
+Lemma leqFalse : forall m n : nat, leqb m n = false -> n <= m.
+intros m n h.
+destruct (total m n) as [mn | nm].
+assert (mnt : leqb m n = true).
+apply leq2.
+exact mn.
+rewrite h in mnt.
+discriminate mnt.
+exact nm.
 Qed.
 
-Lemma insert_hd_lem : forall (a m:nat)(ms:list nat), 
-  leqb_hd a ms=true -> leqb a m=true -> leqb_hd a (insert m ms) =true.
-  intros a m ms.
-  case ms.
-    intros.
-    simpl.
-    assumption.
-    (* cons *)
-    intros n l.
-    simpl.
-    intros.
-    destruct (leqb m n).
-    simpl.
-    assumption.
-    simpl.
-    assumption.
+Lemma insertSortCase : forall (n a : nat)(l : list nat),
+  head a (insert n l) = n \/ head a (insert n l) = head a l.
+intros n a l.
+induction l.
+left.
+simpl.
+reflexivity.
+simpl.
+destruct (leqb n a0).
+left.
+simpl.
+reflexivity.
+right.
+simpl.
+reflexivity.
 Qed.
 
-(* insert_lem expresses that if we insert an element into a sorted 
-   list, we obtain a sorted list.
-*)
-
-Lemma insert_lem : forall (m:nat)(ms:list nat), 
-  sorted ms=true -> sorted (insert m ms)=true.
-(* we proceed by induction over ms: *)
-induction ms.
-  (* case : ms = nil *)
-  intros.
-  simpl.
-  reflexivity.
-  (* case: m:ms *)
-  intro s_a_ms.
-  simpl.
-  case_eq (leqb m a).
-    (* leqb m a = true *)
-    intro leqb_m_a.
-    simpl.
-    change ((leqb m a) && (sorted (a::ms)) = true).
-    rewrite leqb_m_a.
-    rewrite s_a_ms.
-    reflexivity.
-    (* leqb m a = false *)
-    intro nleqb_m_a.
-    simpl.
-    simpl in s_a_ms.
-    apply andb_true_intro.
-    cut (leqb_hd a ms=true /\ sorted ms = true).
-    intros.
-    destruct H as [l s].
-    split.
-    apply insert_hd_lem.
-    exact l.
-    apply leqb_total.
-    exact nleqb_m_a.
-    apply IHms.
-    exact s.
-    apply andb_prop.
-    exact s_a_ms.
+Lemma insertSorted : forall (n : nat)(l : list nat),
+  Sorted l -> Sorted (insert n l).
+intros n l.
+induction l.
+intro h.
+simpl.
+split.
+split.
+apply le_refl.
+intro h.
+simpl.
+simpl in h.
+destruct h as [sl al].
+case_eq (leqb n a).
+intro na.
+simpl.
+split.
+split.
+exact sl.
+exact al.
+apply leq1.
+exact na.
+intro na.
+simpl.
+split.
+apply IHl.
+exact sl.
+destruct (insertSortCase n a l) as [H1 | H2].
+rewrite H1.
+apply leqFalse.
+exact na.
+rewrite H2.
+exact al.
 Qed.
-    
+
 (* using the previous lemma it is easy to prove our main theorem. *)
-Theorem sort_ok : forall ms:list nat,sorted (sort ms)=true.
+Theorem sortSorted : forall ms:list nat,Sorted (sort ms).
 induction ms.
   (* case ms=nil: *)
-  reflexivity.
+  simpl.
+  split.
   (* case a::ms *)
   simpl.
-  apply insert_lem.
+  apply insertSorted.
   exact IHms.
 Qed.
 
@@ -335,88 +316,7 @@ Qed.
    simplify or discussion we only do this for list nat. 
 *)
 
-(* 
 
-   Permutations
-
-   A list is a permutation of another list if every element appears 
-   the same number of times. Hence we define the function count:
-*)
-
-Fixpoint count (n:nat)(ms:list nat) {struct ms} : nat :=
-  match ms with
-  | nil => 0
-  | m::ms' => let cn := count n ms' 
-              in if eqnat n m then S cn else cn
-  end.
-
-Eval compute in count 1 (2::1::1::nil).
-Eval compute in count 2 (2::1::1::nil).
-
-Definition Perm (ns ms:list nat) := forall n:nat,count n ns=count n ms.
-
-(* we establish some basic property of Perm, which will be useful 
-   later: *)
-
-Lemma refl_perm : forall ns:list nat,Perm ns ns.
-unfold Perm.
-intros.
-reflexivity.
-Qed.
-
-Lemma trans_perm : forall ls ms ns:list nat,Perm ls ms -> Perm ms ns -> Perm ls ns.
-unfold Perm.
-intros.
-  transitivity (count n ms).
-  apply H.
-  apply H0.
-Qed.
-
-Lemma cons_perm : forall (n:nat)(ms ns:list nat),Perm ms ns -> Perm (n::ms) (n::ns).
-unfold Perm.
-intros.
-  simpl.
-  rewrite H.
-  case (eqnat n0 n).
-    reflexivity.
-    reflexivity.
-Qed.
-  
-(* perm for sort *)
-
-Lemma insert_perm : forall (ns:list nat)(n:nat), Perm (n::ns) (insert n ns).
-induction ns.
-  intros.
-  apply refl_perm.
-  intros.
-  simpl.
-  case (leqb n a).
-    apply refl_perm.
-    eapply trans_perm.
-    instantiate (1 := a::n::ns).
-    unfold Perm.
-    intros.
-    simpl.
-    case (eqnat n0 n).
-      case (eqnat n0 a).
-      reflexivity.
-      reflexivity.
-      case (eqnat n0 a).
-      reflexivity.
-      reflexivity.
-    apply cons_perm.
-    apply IHns.
-Qed.
-
-Theorem sort_perm : forall ms:list nat,Perm ms (sort ms).
-induction ms.
-  apply refl_perm.
-  eapply trans_perm.
-    apply cons_perm.
-    apply IHms.
-    simpl.
-    apply insert_perm.
-Qed.
 
 End Lists.
 
