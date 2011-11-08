@@ -16,7 +16,7 @@ Section Arith.
     Moreover these are all natural numbers (we say they are defined _inductively_).
 
     Peano went on to represent the fundamental properties of the natural 
-    numbers as some axioms. Some of the axioms express general properties of 
+    numbers using axioms. Some of the axioms express general properties of 
     equality, which we have already seen. But the following three are 
     specific to the natural numbers. Indeed, they are provable propositions
     in Coq:
@@ -60,7 +60,7 @@ Definition pred (n : nat) : nat :=
 Lemma peano8 : forall m n:nat, S m = S n -> m = n.
 intros m n h.
 
-(** By folding with [pref] we can change the current goal so that we can
+(** By folding with [pred] we can change the current goal so that we can
     apply our hypothesis. *)
 
 fold (pred (S m)).
