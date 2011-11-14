@@ -1,4 +1,4 @@
-MODULES       := Intro Prop Pred Bool Sets Arith Lists Expr
+MODULES       := Intro Prop Pred Bool Sets Arith Lists Expr Meta
 TEX           := $(MODULES:%=latex/%.v.tex)
 VS            := $(MODULES:%=src/%.v)
 VS_DOC        := $(MODULES:%=%.v)
@@ -43,6 +43,9 @@ latex/Expr.v.tex: Makefile src/Expr.v
 	cd src ; coqdoc --interpolate --latex --body-only -s \
 		Expr.v -o ../latex/Expr.v.tex
 
+latex/Meta.v.tex: Makefile src/Meta.v 
+	cd src ; coqdoc --interpolate --latex --body-only -s \
+		Meta.v -o ../latex/Meta.v.tex
 src : $(VS)
 	mkdir -p ../www/src
 	cp src/*.v ../www/src

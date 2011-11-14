@@ -5,9 +5,31 @@ Section Meta.
 
 Require Import Coq.Strings.String.
 Require Import Coq.Lists.List.
+Require Import Coq.Program.Equality.
 
 Set Implicit Arguments.
 
+(** This chapter is about using Coq to reason about its own logic. 
+   This was the title of a paper by Bruno Barras who managed to 
+   develop the theory of Coq inside Coq. 
+
+   Obviously, we won't be able to do this here so we are going to
+   focus on a more modest goal: we are limiting ourselves to
+   propositional logic and to keep things short we will look 
+   at propositional logic with implication only.
+
+   We are going to develop this logic inside coq using _natural
+   deduction_. This is very close to the atcual Coq proof objects.
+
+   An alternative would be to use _combinatory logic_. We are going to
+   compare these two approaches and we will show that they are equivalent.
+*)
+
+(** * Formulas as trees *)
+
+(** We are representing logical formulas as trees. Variables are 
+   just representined as strings.
+*)
 
 Inductive Formula : Set :=
   | Var : string -> Formula
@@ -15,129 +37,309 @@ Inductive Formula : Set :=
 
 Notation "x ==> y"  := (Impl x y) (at level 30, right associativity).
 
+(** As examples we are going to use three propositions, all
+    of them are tautologies. Two of them will show up as the 
+    basic combinators of combinatoric logic later. *)
+
+(** The identity combinator "I". *)
+
 Definition I (P : Formula) : Formula := P ==> P.
 
+(** The _constant_ combinator "K". *)
+
 Definition K (P Q : Formula) : Formula := P ==> Q ==> P.
+
+(** The (mysterious) combinator "S". *)
 
 Definition S (P Q R : Formula) : Formula := 
   (P ==> Q ==> R)
   ==> (P ==> Q)
   ==> P ==> R.
 
-(*
-Definition I : Formula := Var "P" ==> Var "P".
+(** We represent Hypotheses as a list of formula. *)
 
-Definition K : Formula := Var "P" ==> Var "Q" ==> Var "P".
+Definition Hyps : Set := list Formula.
 
-Definition S : Formula := 
-  (Var "P" ==> Var "Q" ==> Var "R")
-  ==> (Var "P" ==> Var "Q")
-  ==> Var "P" ==> Var "R".
+(** * Natural deduction *)
+
+(** We are ging to represent the proposition that a formula [P]
+   is provable from a list of assumptions [Hs] as 
+   [ND_Proof Hs P]. This is an inductive definition, the
+   constructors are nodes in the proof tree. 
 *)
 
-Definition Hypotheses : Set := list Formula.
+Inductive ND_Proof : Hyps -> Formula -> Prop :=
+(** The first constructor [nd_ass] allows us to use the last 
+    hypothesis from our list of hypotheses (which appears at the
+    head of the list). *)
+| nd_ass : forall (Hs : Hyps)(P : Formula),
+             ND_Proof (P :: Hs) P
 
-Inductive ND_Proof : Hypotheses -> Formula -> Prop :=
-| ass : forall (Hs : Hypotheses)(A : Formula),
-             ND_Proof (A :: Hs) A
-| weak : forall (Hs : Hypotheses)(A B : Formula),
-             ND_Proof Hs A -> ND_Proof (B :: Hs) A
-| intro : forall (Hs : Hypotheses)(A B : Formula),
-             ND_Proof (A :: Hs) B -> ND_Proof Hs (A ==> B)
-| apply : forall (Hs : Hypotheses)(A B : Formula),
-             ND_Proof Hs (A ==> B) -> ND_Proof Hs A -> ND_Proof Hs B.
+(** To be able to access earlier hypothesis we use [nd_weak]
+   which allows us to ignore the last hypothesis (i.e. the head of 
+   the list). *)
 
-Lemma proveI : forall (Hs : Hypotheses)(P : Formula),  
+| nd_weak : forall (Hs : Hyps)(P Q : Formula),
+             ND_Proof Hs P -> ND_Proof (Q :: Hs) P
+
+(** The next constructor [nd_intro] corresponds to the intro 
+   tactic in coq: to prove [P ==> Q] we assume [P], i.e. we add it 
+   to the list of assumptions, and continue to prove [Q].
+*)
+
+| nd_intro : forall (Hs : Hyps)(P Q : Formula),
+             ND_Proof (P :: Hs) Q -> ND_Proof Hs (P ==> Q)
+
+(** The elimination for application is slightly different from 
+   the one in Coq which is hard to state precisely. The rule [nd_apply]
+   corresponds to _modens ponens_: if you can prove [P ==> Q]
+   and also [P] then you can also prove [Q].
+*)
+
+| nd_apply : forall (Hs : Hyps)(P Q : Formula),
+             ND_Proof Hs (P ==> Q) -> ND_Proof Hs P -> ND_Proof Hs Q.
+
+
+(** As examples we are going to prove that the examples {I],[K] 
+   and [S] are provable. *)
+
+(** The proof for [I] follows almost exactly the proof of 
+   the same tautology in Coq. *)
+
+Lemma nd_I : forall (Hs : Hyps)(P : Formula),  
                   ND_Proof Hs (I P).
 intros Hs P.
 unfold I.
-apply intro.
-apply ass.
+apply nd_intro.
+apply nd_ass.
 Qed.
 
-Lemma proveK : forall (Hs : Hypotheses)(P Q : Formula), 
+(** To prove [K] we need to use [weak]. *)
+
+Lemma nd_K : forall (Hs : Hyps)(P Q : Formula), 
                    ND_Proof Hs (K P Q).
 intros Hs P Q.
 unfold K.
-apply intro.
-apply intro.
-apply weak.
-apply ass.
+apply nd_intro.
+apply nd_intro.
+apply nd_weak.
+apply nd_ass.
 Qed.
 
-Lemma proveS : forall (Hs : Hypotheses)(P Q R : Formula), 
+(** The proof of [S] uses [nd_apply]. It also shows that 
+   modens ponens isn't so suitable to interactive proof,
+   because we need some hindsight how to apply it. 
+*)
+
+Lemma nd_S : forall (Hs : Hyps)(P Q R : Formula), 
                    ND_Proof Hs (S P Q R).
 intros Hs P Q R.
 unfold S.
-apply intro.
-apply intro.
-apply intro.
-eapply apply. eapply apply.
-apply weak. apply weak. apply ass.
-apply ass. 
-eapply apply.
-apply weak. apply ass.
-apply ass.
+apply nd_intro.
+apply nd_intro.
+apply nd_intro.
+eapply nd_apply. eapply nd_apply.
+apply nd_weak. apply nd_weak. apply nd_ass.
+apply nd_ass. 
+eapply nd_apply.
+apply nd_weak. apply nd_ass.
+apply nd_ass.
 Qed.
 
-Inductive CL_Proof : Hypotheses -> Formula -> Prop :=
-| ass' : forall (Hs : Hypotheses)(P : Formula),
+(** * Combinatory logic. *)
+
+(** Combinatory logic (also sometimes called "Hilbert style")
+   is based on the maybe surprising observation that we can replace
+   [nd_intro] by adding [K] and [S] as axioms. This leads
+   to a variable free representation of logic. However, to
+   be able to compare natural deduction and combinatory logic we 
+   will consider combinatory logic with variables here. However,
+   if the list of hypotheses is empty we will never need variables
+   unlike natural deduction where the [nd_intro] rule introduces variables.
+*)
+
+(** We define [CL_Proof Hs P] to mean that [P] is provable from [Hs] in 
+   combinatory logic. *)
+
+Inductive CL_Proof : Hyps -> Formula -> Prop :=
+
+(** The rules relating to hypothesis are exactly the same as the
+    ones for natural deduction. *)
+
+| cl_ass : forall (Hs : Hyps)(P : Formula),
              CL_Proof (P :: Hs) P
-| weak' : forall (Hs : Hypotheses)(P Q : Formula),
+| cl_weak : forall (Hs : Hyps)(P Q : Formula),
              CL_Proof Hs P -> CL_Proof (Q :: Hs) P
-| proveK' : forall (Hs : Hypotheses)(P Q : Formula),
+
+(** We are adding proofs for K and S as axioms. *)
+
+| cl_K : forall (Hs : Hyps)(P Q : Formula),
              CL_Proof Hs (K P Q)
-| proveS' : forall (Hs : Hypotheses)(P Q R: Formula),
+| cl_S : forall (Hs : Hyps)(P Q R: Formula),
              CL_Proof Hs (S P Q R)
-| apply' : forall (Hs : Hypotheses)(P Q : Formula),
+
+(** Modus ponens [cl_apply] is the same rule as for natural deduction. *)
+
+| cl_apply : forall (Hs : Hyps)(P Q : Formula),
              CL_Proof Hs (P ==> Q) -> CL_Proof Hs P -> CL_Proof Hs Q.
 
-Lemma proveI' : forall (Hs : Hypotheses)(P : Formula), 
+
+(** We can actually prove [I] from [S] and [K]. *)
+
+Lemma cl_I : forall (Hs : Hyps)(P : Formula), 
          CL_Proof Hs (I P).
 intros Hs P.
 unfold I.
-eapply apply'.
-eapply apply'.
-apply proveS'.
-apply proveK'.
+eapply cl_apply.
+eapply cl_apply.
+apply cl_S.
+apply cl_K.
+
+(** We need to instantiate one of the meta variables by hand.
+    This is how we do this in Coq - please check the manual. *)
+
 instantiate (1:= P ==> P ).
-apply proveK'.
+apply cl_K.
 Qed.
 
-Lemma intro' : forall (Hs Hs' : Hypotheses)(P Q : Formula),
-             CL_Proof (P :: Hs) Q -> Hs' = Hs -> CL_Proof Hs (P ==> Q).
-intros Hs P Q' Q H e.
-induction H.
+(** Since we did already prove [K] and [S] using natural
+   deduction, we can show that every proof in combinatory logic
+   can be turned into one in natural deduction. We prove this 
+   by induction over the derivation trees. 
 
+   Basically we are showing that each node in an CL proof tree
+   can be replaced by a ND tree by replacing the axioms [K]
+   and [S] by the corresponding proofs.
+*)
 
-Require Coq.Program.Equality.
+Lemma cl2nd : forall (Hs : Hyps)(P : Formula), 
+                CL_Proof Hs P -> ND_Proof Hs P.
+intros Hs P H.
 
-Lemma intro' : forall (Hs : Hypotheses)(P Q : Formula),
-             CL_Proof (P :: Hs) Q -> CL_Proof Hs (P ==> Q).
-intros Hs P Q H.
+(** Since the derivation trees are _depndent_, i.e. they depend on 
+   the choice of hypotheses and proposition we need to invoke
+   the tactic [dependent induction]. *)
+
 dependent induction H.
 
+(** We have now to provide a translation for each case. *)
 
-assert (forall (Hs':Hypotheses)(P' Q':Formula),
-  Hs = Hs' -> P = P' -> Q = Q' -> CL_Proof Hs' (P' ==> Q')).
-induction H.
+(** [ass_cl] is translated by [nd_ass]. *)
+
+apply nd_ass.
+
+(** And [weak_cl] by [nd_weak]. Here we have to use the
+    induction hypothesis to recursively translate the rest
+    of the proof. *)
+
+apply nd_weak.
+exact IHCL_Proof.
+
+(** [cl_K] is translated as [nd_K]. Here on axiom is replaced 
+    by a small proof tree. *)
+
+apply nd_K.
+
+(** [cl_S] is translated as [nd_S]. *)
+
+apply nd_S.
+
+(** [cl_apply] is translated by [nd_apply]. Since there are two subproofs
+    we have to translate them recursively by using the induction hypotheses. 
+*)
+
+eapply nd_apply.
+apply IHCL_Proof1.
+apply IHCL_Proof2.
+Qed.
+
+(** * The deduction theorem *)
+
+(** The main ingredient to prove the other direction of the
+   equivalence, i.e.  that it is possible to simulate natural
+   deduction proofs in combinatory logic, is to show that combinatory
+   logic is closed under the [intro] rule. This is usually called _the
+   deduction theorem_. *)
 
 
-induction H.
+Lemma cl_intro : forall (Hs : Hyps)(P Q : Formula),
+             CL_Proof (P :: Hs) Q -> CL_Proof Hs (P ==> Q).
+intros Hs P Q H.
+
+(** to prove this we need to perform an induction over the proof tree
+    showing [CL_Proof (P :: Hs) Q]. *)
+
+dependent induction H.
+
+(** The case for [cl_ass] can be proven using the identity proof
+    [cl_I] which we have already derived. *)
+
+apply cl_I.
+
+(** In the case for [cl_weak] we need to use [cl_K]. *)
+
+eapply cl_apply.
+apply cl_K.
+exact H.
+
+(** The case for [cl_K] can be derived by using [cl_K] once to
+    ignore the argument and a 2nd time to provide the constant
+    to be actually used.
+*)
+
+eapply cl_apply.
+apply cl_K.
+apply cl_K.
+
+(** The case for [cl_S] is similar only that we use [cl_S] the 2nd time. *)
+
+eapply cl_apply.
+apply cl_K.
+apply cl_S.
+
+(** The case for [cl_app] is the most interesting one. It finally lifts the
+   mystery about [S]. It is actually what we need to translate this 
+   case, ie. to shift abstraction over an application. *)
+
+eapply cl_apply.
+eapply cl_apply.
+apply cl_S.
+apply IHCL_Proof1.
+reflexivity.
+apply IHCL_Proof2.
+reflexivity.
+Qed.
+
+(** * Equivalence of natural deduction and combinatory logic. *)
+
+(** We have now all the ingredients together to show that natural deduction
+    and combinatory logic prove exactky the same propositions. *)
 
 
+(** To prove the other direction we only need to appeal to the
+   deduction theorem [cl_intro] when translating [nd_intro. *)
 
-inversion H.
-apply proveI'.
-eapply apply'.
-apply proveK'.
-exact H3.
-eapply apply'.
-apply proveK'.
-apply proveK'.
-eapply apply'.
-apply proveK'.
-apply proveS'.
+Lemma nd2cl : forall (Hs : Hyps)(P : Formula), 
+                ND_Proof Hs P -> CL_Proof Hs P.
+intros Hs P H.
+dependent induction H.
+apply cl_ass.
+apply cl_weak. exact IHND_Proof.
+apply cl_intro. exact IHND_Proof.
+eapply cl_apply.
+apply IHND_Proof1.
+exact IHND_Proof2.
+Qed.
+
+(** The final theorem *)
+
+Theorem ndcl : forall (Hs : Hyps)(P : Formula), 
+                ND_Proof Hs P <-> CL_Proof Hs P.
+intros Hs P.
+split.
+apply nd2cl.
+apply cl2nd.
+Qed.
 
 
 
