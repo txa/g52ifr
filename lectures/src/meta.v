@@ -1,6 +1,6 @@
 (* Copyright (c) 2011, Thorsten Altenkirch *)
 
-(** %\chapter{%#<H0>#Coq in Coq%}%#</H0># *)
+(** %\chapter{%#<H1>#Coq in Coq%}%#</H1># *)
 Section Meta.
 
 Require Import Coq.Strings.String.
@@ -72,16 +72,15 @@ Inductive ND_Proof : Hyps -> Formula -> Prop :=
 (** The first constructor [nd_ass] allows us to use the last 
     hypothesis from our list of hypotheses (which appears at the
     head of the list). *)
+
 | nd_ass : forall (Hs : Hyps)(P : Formula),
              ND_Proof (P :: Hs) P
-
 (** To be able to access earlier hypothesis we use [nd_weak]
    which allows us to ignore the last hypothesis (i.e. the head of 
    the list). *)
 
 | nd_weak : forall (Hs : Hyps)(P Q : Formula),
              ND_Proof Hs P -> ND_Proof (Q :: Hs) P
-
 (** The next constructor [nd_intro] corresponds to the intro 
    tactic in coq: to prove [P ==> Q] we assume [P], i.e. we add it 
    to the list of assumptions, and continue to prove [Q].
@@ -89,7 +88,6 @@ Inductive ND_Proof : Hyps -> Formula -> Prop :=
 
 | nd_intro : forall (Hs : Hyps)(P Q : Formula),
              ND_Proof (P :: Hs) Q -> ND_Proof Hs (P ==> Q)
-
 (** The elimination for application is slightly different from 
    the one in Coq which is hard to state precisely. The rule [nd_apply]
    corresponds to _modens ponens_: if you can prove [P ==> Q]
@@ -100,7 +98,7 @@ Inductive ND_Proof : Hyps -> Formula -> Prop :=
              ND_Proof Hs (P ==> Q) -> ND_Proof Hs P -> ND_Proof Hs Q.
 
 
-(** As examples we are going to prove that the examples {I],[K] 
+(** As examples we are going to prove that the examples [I],[K] 
    and [S] are provable. *)
 
 (** The proof for [I] follows almost exactly the proof of 
@@ -148,7 +146,7 @@ Qed.
 
 (** * Combinatory logic. *)
 
-(** Combinatory logic (also sometimes called "Hilbert style")
+(** Combinatory logic (also sometimes called "Hilbert style logic")
    is based on the maybe surprising observation that we can replace
    [nd_intro] by adding [K] and [S] as axioms. This leads
    to a variable free representation of logic. However, to
@@ -313,7 +311,7 @@ Qed.
 (** * Equivalence of natural deduction and combinatory logic. *)
 
 (** We have now all the ingredients together to show that natural deduction
-    and combinatory logic prove exactky the same propositions. *)
+    and combinatory logic prove exactly the same propositions. *)
 
 
 (** To prove the other direction we only need to appeal to the

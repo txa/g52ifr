@@ -1,6 +1,6 @@
 (* Copyright (c) 2011, Thorsten Altenkirch *)
 
-(** %\chapter{%#<H0>#Compiling expressions%}%#</H0># *)
+(** %\chapter{%#<H1>#Compiling expressions%}%#</H1># *)
 Section Expr.
 
 (** We are going to use the standard library for lists. *)
