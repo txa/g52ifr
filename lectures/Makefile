@@ -1,4 +1,4 @@
-MODULES       := Intro Prop Pred Bool Sets Arith Lists
+MODULES       := Intro Prop Pred Bool Sets Arith Lists Expr
 TEX           := $(MODULES:%=latex/%.v.tex)
 VS            := $(MODULES:%=src/%.v)
 VS_DOC        := $(MODULES:%=%.v)
@@ -39,6 +39,9 @@ latex/Lists.v.tex: Makefile src/Lists.v
 	cd src ; coqdoc --interpolate --latex --body-only -s \
 		Lists.v -o ../latex/Lists.v.tex
 
+latex/Expr.v.tex: Makefile src/Expr.v 
+	cd src ; coqdoc --interpolate --latex --body-only -s \
+		Expr.v -o ../latex/Expr.v.tex
 
 src : $(VS)
 	mkdir -p ../www/src
@@ -52,5 +55,5 @@ latex/g52ifr.pdf: latex/g52ifr.tex $(TEX)
 html: Makefile $(VS) 
 	mkdir -p ../www/html
 	cd src; coqdoc --interpolate $(VS_DOC) -d ../../www/html
-	
+
 all : html src notes
