@@ -166,14 +166,17 @@ Eval compute in run (compile e1).
    
 *)
 
-Lemma compileLem : forall (e:Expr)(p:Code)(st:Stack),
-  runAux st (compileAux e p) = runAux ((eval e)::st) p.
+Lemma compileLem : 
+forall (e:Expr)(p:Code)(st:Stack),
+  runAux st (compileAux e p) = 
+  runAux ((eval e)::st) p.
+intro e.
 induction e.
 intros p st.
 simpl.
 reflexivity.
+intros p st.
 simpl.
-intros.
 rewrite IHe2.
 rewrite IHe1.
 simpl.

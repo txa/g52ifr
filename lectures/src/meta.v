@@ -45,6 +45,8 @@ Notation "x ==> y"  := (Impl x y) (at level 30, right associativity).
 
 Definition I (P : Formula) : Formula := P ==> P.
 
+Eval compute in (I (Var "P")).
+
 (** The _constant_ combinator "K". *)
 
 Definition K (P Q : Formula) : Formula := P ==> Q ==> P.
@@ -104,8 +106,8 @@ Inductive ND_Proof : Hyps -> Formula -> Prop :=
 (** The proof for [I] follows almost exactly the proof of 
    the same tautology in Coq. *)
 
-Lemma nd_I : forall (Hs : Hyps)(P : Formula),  
-                  ND_Proof Hs (I P).
+Lemma nd_I : 
+forall (Hs : Hyps)(P : Formula),               ND_Proof Hs (I P).
 intros Hs P.
 unfold I.
 apply nd_intro.
@@ -114,8 +116,9 @@ Qed.
 
 (** To prove [K] we need to use [weak]. *)
 
-Lemma nd_K : forall (Hs : Hyps)(P Q : Formula), 
-                   ND_Proof Hs (K P Q).
+Lemma nd_K : 
+forall (Hs : Hyps)(P Q : Formula), 
+          ND_Proof Hs (K P Q).
 intros Hs P Q.
 unfold K.
 apply nd_intro.
@@ -184,7 +187,8 @@ Inductive CL_Proof : Hyps -> Formula -> Prop :=
 
 (** We can actually prove [I] from [S] and [K]. *)
 
-Lemma cl_I : forall (Hs : Hyps)(P : Formula), 
+Lemma cl_I : 
+forall (Hs : Hyps)(P : Formula), 
          CL_Proof Hs (I P).
 intros Hs P.
 unfold I.
@@ -210,8 +214,9 @@ Qed.
    and [S] by the corresponding proofs.
 *)
 
-Lemma cl2nd : forall (Hs : Hyps)(P : Formula), 
-                CL_Proof Hs P -> ND_Proof Hs P.
+Lemma cl2nd : 
+forall (Hs : Hyps)(P : Formula), 
+  CL_Proof Hs P -> ND_Proof Hs P.
 intros Hs P H.
 
 (** Since the derivation trees are _depndent_, i.e. they depend on 
@@ -260,8 +265,10 @@ Qed.
    deduction theorem_. *)
 
 
-Lemma cl_intro : forall (Hs : Hyps)(P Q : Formula),
-             CL_Proof (P :: Hs) Q -> CL_Proof Hs (P ==> Q).
+Lemma cl_intro : 
+forall (Hs : Hyps)(P Q : Formula),
+    CL_Proof (P :: Hs) Q 
+ -> CL_Proof Hs (P ==> Q).
 intros Hs P Q H.
 
 (** to prove this we need to perform an induction over the proof tree
@@ -318,7 +325,7 @@ Qed.
    deduction theorem [cl_intro] when translating [nd_intro. *)
 
 Lemma nd2cl : forall (Hs : Hyps)(P : Formula), 
-                ND_Proof Hs P -> CL_Proof Hs P.
+ ND_Proof Hs P -> CL_Proof Hs P.
 intros Hs P H.
 dependent induction H.
 apply cl_ass.
@@ -331,8 +338,9 @@ Qed.
 
 (** The final theorem *)
 
-Theorem ndcl : forall (Hs : Hyps)(P : Formula), 
-                ND_Proof Hs P <-> CL_Proof Hs P.
+Theorem ndcl : 
+forall (Hs : Hyps)(P : Formula), 
+ ND_Proof Hs P <-> CL_Proof Hs P.
 intros Hs P.
 split.
 apply nd2cl.
